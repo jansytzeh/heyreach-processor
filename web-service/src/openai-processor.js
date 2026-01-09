@@ -152,9 +152,12 @@ export async function processConversations({ dryRun = true, maxMessages = 30 }) 
  * Process a single conversation
  */
 async function processOneConversation(conversation, runId) {
+  // Note: API returns 'id' for conversation ID, not 'conversationId'
+  const conversationId = conversation.id || conversation.conversationId;
+
   const draft = {
-    draftId: `draft_${conversation.conversationId}_${Date.now()}`,
-    conversationId: conversation.conversationId,
+    draftId: `draft_${conversationId}_${Date.now()}`,
+    conversationId: conversationId,
     accountId: conversation.linkedInAccountId,
     prospect: null,
     action: null,
@@ -172,7 +175,7 @@ async function processOneConversation(conversation, runId) {
     // Get full chatroom with all messages
     const chatroom = await heyreach.getChatroom(
       conversation.linkedInAccountId,
-      conversation.conversationId
+      conversationId
     );
 
     // Extract prospect info
@@ -254,7 +257,7 @@ async function processOneConversation(conversation, runId) {
     return draft;
 
   } catch (error) {
-    console.error(`[${runId}] Error processing ${conversation.conversationId}:`, error);
+    console.error(`[${runId}] Error processing ${conversationId}:`, error);
     draft.outcome = 'error';
     draft.error = error.message;
     return draft;

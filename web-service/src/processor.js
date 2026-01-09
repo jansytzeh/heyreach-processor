@@ -29,7 +29,7 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
 
   try {
     // Step 1: Fetch unseen conversations
-    Sentry.logger.info('Fetching unseen conversations', { runId });
+    console.log('Fetching unseen conversations', { runId });
 
     const conversationsResponse = await heyreach.getConversations({
       linkedInAccountIds: config.linkedInAccountIds,
@@ -41,7 +41,7 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
     const conversations = conversationsResponse?.items || [];
     results.summary.fetched = conversations.length;
 
-    Sentry.logger.info('Conversations fetched', { runId, count: conversations.length });
+    console.log('Conversations fetched', { runId, count: conversations.length });
 
     if (conversations.length === 0) {
       results.endTime = new Date().toISOString();
@@ -54,7 +54,7 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
       conv.lastMessageSender === 'CORRESPONDENT'
     );
 
-    Sentry.logger.info('Eligible conversations filtered', { runId, eligible: eligibleConversations.length });
+    console.log('Eligible conversations filtered', { runId, eligible: eligibleConversations.length });
 
     // Step 3: Process each conversation
     let messagesSent = 0;
@@ -62,7 +62,7 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
     for (const conversation of eligibleConversations) {
       // Check message limit
       if (messagesSent >= maxMessages) {
-        Sentry.logger.info('Max messages limit reached', { runId, limit: maxMessages });
+        console.log('Max messages limit reached', { runId, limit: maxMessages });
         break;
       }
 
@@ -87,14 +87,14 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
       } else if (conversationResult.outcome === 'error') {
         results.summary.errors++;
         results.errors.push({
-          conversationId: conversation.conversationId,
+          conversationId: conversationResult.conversationId,
           error: conversationResult.error
         });
       }
     }
 
   } catch (error) {
-    Sentry.logger.error('Fatal processing error', { runId, error: error.message });
+    console.error('Fatal processing error', { runId, error: error.message });
     Sentry.captureException(error);
     results.errors.push({
       type: 'fatal',
@@ -113,8 +113,11 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
  * Process a single conversation
  */
 async function processOneConversation(conversation, dryRun, runId) {
+  // Note: API returns 'id' for conversation ID, not 'conversationId'
+  const conversationId = conversation.id || conversationId;
+
   const result = {
-    conversationId: conversation.conversationId,
+    conversationId: conversationId,
     accountId: conversation.linkedInAccountId,
     prospect: null,
     action: null,
@@ -128,7 +131,7 @@ async function processOneConversation(conversation, dryRun, runId) {
     // Get full chatroom with all messages
     const chatroom = await heyreach.getChatroom(
       conversation.linkedInAccountId,
-      conversation.conversationId
+      conversationId
     );
 
     // Extract prospect info
@@ -162,14 +165,14 @@ async function processOneConversation(conversation, dryRun, runId) {
     if (agentResponse.action === 'ESCALATE') {
       result.outcome = 'escalated';
       result.message = null;
-      Sentry.logger.warn('Conversation escalated', { runId, prospect: result.prospect.name, reason: agentResponse.reasoning });
+      console.warn('Conversation escalated', { runId, prospect: result.prospect.name, reason: agentResponse.reasoning });
       return result;
     }
 
     if (agentResponse.action === 'HOLD') {
       result.outcome = 'skipped';
       result.reasoning = agentResponse.reasoning;
-      Sentry.logger.info('Conversation on hold', { runId, prospect: result.prospect.name, reason: agentResponse.reasoning });
+      console.log('Conversation on hold', { runId, prospect: result.prospect.name, reason: agentResponse.reasoning });
       return result;
     }
 
@@ -194,12 +197,12 @@ async function processOneConversation(conversation, dryRun, runId) {
     if (!validation.valid) {
       result.outcome = 'error';
       result.error = `Guardrail violation: ${validation.errors.join(', ')}`;
-      Sentry.logger.error('Guardrail violation', { runId, prospect: result.prospect.name, errors: validation.errors });
+      console.error('Guardrail violation', { runId, prospect: result.prospect.name, errors: validation.errors });
       return result;
     }
 
     if (validation.warnings.length > 0) {
-      Sentry.logger.warn('Response warnings', { runId, prospect: result.prospect.name, warnings: validation.warnings });
+      console.warn('Response warnings', { runId, prospect: result.prospect.name, warnings: validation.warnings });
     }
 
     result.message = agentResponse.message;
@@ -207,7 +210,7 @@ async function processOneConversation(conversation, dryRun, runId) {
     // Send or preview
     if (dryRun) {
       result.outcome = 'dry-run';
-      Sentry.logger.info('Dry-run message preview', {
+      console.log('Dry-run message preview', {
         runId,
         prospect: result.prospect.name,
         action: result.action,
@@ -217,25 +220,25 @@ async function processOneConversation(conversation, dryRun, runId) {
       // Actually send the message
       await heyreach.sendMessage({
         linkedInAccountId: conversation.linkedInAccountId,
-        conversationId: conversation.conversationId,
+        conversationId: conversationId,
         message: agentResponse.message
       });
 
       result.outcome = 'sent';
-      Sentry.logger.info('Message sent', {
+      console.log('Message sent', {
         runId,
         prospect: result.prospect.name,
         action: result.action,
-        conversationId: conversation.conversationId
+        conversationId: conversationId
       });
     }
 
     return result;
 
   } catch (error) {
-    Sentry.logger.error('Error processing conversation', {
+    console.error('Error processing conversation', {
       runId,
-      conversationId: conversation.conversationId,
+      conversationId: conversationId,
       error: error.message
     });
     Sentry.captureException(error);

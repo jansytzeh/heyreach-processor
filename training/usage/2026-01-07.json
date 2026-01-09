@@ -1,0 +1,16 @@
+{
+  "date": "2026-01-07",
+  "runs": [],
+  "totals": {
+    "runs": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "estimated_cost_usd": 0.00
+  },
+  "outcomes": {
+    "messages_sent": 0,
+    "conversations_processed": 0,
+    "training_updates": 0
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp:*)",
+      "Bash(cat:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(claude config list:*)",
+      "Bash(claude config get:*)",
+      "mcp__heyreach__get_conversations_v2",
+      "mcp__heyreach__get_chatroom",
+      "mcp__heyreach__send_message",
+      "Bash(time /t:*)",
+      "WebFetch(domain:mcp.heyreach.io)",
+      "Skill(process-heyreach)",
+      "Skill(process-heyreach:*)",
+      "Skill(train-heyreach)",
+      "Skill(train-heyreach:*)",
+      "Bash(timeout:*)",
+      "Bash(mkdir:*)",
+      "mcp__heyreach__get_all_linked_in_accounts",
+      "Bash(ping:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:api.heyreach.io)",
+      "Bash(powershell -File:*)",
+      "Bash(powershell:*)",
+      "Bash(tree:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd OpenAI web agent with dashboard UI\n\n- Implement OpenAI Responses API with file_search \\(RAG\\) for draft generation\n- Add two-tier model strategy: gpt-5-mini for drafts, gpt-5 for high-risk review\n- Create web dashboard for managing drafts, runs, and configuration\n- Add session-based password authentication \\(optional\\)\n- Implement auto-approve at 85% confidence threshold\n- Add guardrail validation for pricing and required elements\n- Create vector store setup script for knowledge base\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
