@@ -185,17 +185,19 @@ Respond with JSON matching the schema. Set "reviewed_by_gpt5": true`;
  * Extract prospect information
  */
 function extractProspectInfo(conversation, chatroom) {
-  const correspondent = chatroom?.correspondent || conversation?.correspondent || {};
+  // Handle both API response formats (correspondentProfile from V2, correspondent from chatroom)
+  const correspondent = chatroom?.correspondentProfile || chatroom?.correspondent ||
+                       conversation?.correspondentProfile || conversation?.correspondent || {};
 
   return {
     firstName: correspondent.firstName || 'there',
     lastName: correspondent.lastName || '',
-    fullName: correspondent.fullName || correspondent.firstName || 'there',
+    fullName: correspondent.fullName || `${correspondent.firstName || ''} ${correspondent.lastName || ''}`.trim() || 'there',
     headline: correspondent.headline || '',
     company: correspondent.companyName || '',
     location: correspondent.location || '',
-    profileUrl: correspondent.publicProfileUrl || correspondent.profileUrl || '',
-    tags: conversation?.tags || []
+    profileUrl: correspondent.profileUrl || correspondent.publicProfileUrl || '',
+    tags: correspondent?.tags || conversation?.tags || []
   };
 }
 
@@ -207,8 +209,9 @@ function extractMessages(chatroom) {
 
   return messages.map(m => ({
     sender: m.sender,
-    text: m.messageBody || m.text || '',
-    timestamp: m.timestamp || m.sentAt
+    // Handle different API formats: body (V2), messageBody (chatroom), text (fallback)
+    text: m.body || m.messageBody || m.text || '',
+    timestamp: m.createdAt || m.timestamp || m.sentAt
   }));
 }
 
@@ -287,7 +290,7 @@ OUTPUT: Return valid JSON matching the provided schema.`;
  */
 function buildUserPrompt(prospect, messages, campaignType) {
   const conversationHistory = messages.map(m =>
-    `[${m.sender === 'CALLER' ? 'US' : 'PROSPECT'}]: ${m.text}`
+    `[${m.sender === 'ME' || m.sender === 'CALLER' ? 'US' : 'PROSPECT'}]: ${m.text}`
   ).join('\n');
 
   return `## PROSPECT PROFILE

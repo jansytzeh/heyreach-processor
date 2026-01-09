@@ -172,26 +172,21 @@ async function processOneConversation(conversation, runId) {
   };
 
   try {
-    // Get full chatroom with all messages
-    const chatroom = await heyreach.getChatroom(
-      conversation.linkedInAccountId,
-      conversationId
-    );
-
-    // Extract prospect info
-    const correspondent = chatroom?.correspondent || conversation?.correspondent || {};
+    // Use data from conversation object (GetConversationsV2 includes messages)
+    // No need for separate getChatroom call
+    const correspondent = conversation?.correspondentProfile || conversation?.correspondent || {};
     draft.prospect = {
-      name: correspondent.fullName || correspondent.firstName || 'Unknown',
+      name: correspondent.fullName || `${correspondent.firstName || ''} ${correspondent.lastName || ''}`.trim() || 'Unknown',
       firstName: correspondent.firstName || '',
       lastName: correspondent.lastName || '',
       company: correspondent.companyName || '',
       headline: correspondent.headline || '',
       location: correspondent.location || '',
-      profileUrl: correspondent.publicProfileUrl || ''
+      profileUrl: correspondent.profileUrl || correspondent.publicProfileUrl || ''
     };
 
-    // Get last prospect message for preview
-    const messages = chatroom?.messages || [];
+    // Get messages from conversation (already included in GetConversationsV2 response)
+    const messages = conversation?.messages || [];
     const lastProspectMessage = messages.filter(m => m.sender === 'CORRESPONDENT').pop();
 
     if (!lastProspectMessage) {
@@ -200,7 +195,7 @@ async function processOneConversation(conversation, runId) {
       return draft;
     }
 
-    draft.lastProspectMessage = lastProspectMessage.messageBody || lastProspectMessage.text || '';
+    draft.lastProspectMessage = lastProspectMessage.body || lastProspectMessage.messageBody || lastProspectMessage.text || '';
 
     // Check if we've already processed this
     const alreadyProcessed = checkAlreadyProcessed(messages);
@@ -208,7 +203,8 @@ async function processOneConversation(conversation, runId) {
 
     // Generate response using OpenAI with file_search
     console.log(`[${runId}] Generating response for ${draft.prospect.name}...`);
-    const agentResponse = await generateResponse(conversation, chatroom);
+    // Pass conversation as both params - it has all the data from GetConversationsV2
+    const agentResponse = await generateResponse(conversation, conversation);
 
     draft.action = agentResponse.action;
     draft.reasoning = agentResponse.reasoning;
