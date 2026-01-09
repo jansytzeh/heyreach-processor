@@ -102,11 +102,7 @@ app.get('/health', async (req, res) => {
 app.post('/process', authenticate, async (req, res) => {
   const { dryRun = false, maxMessages = 30 } = req.body;
 
-  Sentry.logger.info('Processing started', {
-    action: 'process_start',
-    dryRun,
-    maxMessages
-  });
+  console.log('[Process] Starting', { dryRun, maxMessages });
 
   try {
     const result = await processConversations({
@@ -114,21 +110,14 @@ app.post('/process', authenticate, async (req, res) => {
       maxMessages
     });
 
-    Sentry.logger.info('Processing completed', {
-      action: 'process_complete',
-      runId: result.runId,
-      ...result.summary
-    });
+    console.log('[Process] Completed', { runId: result.runId, ...result.summary });
 
     res.json({
       success: true,
       ...result
     });
   } catch (error) {
-    Sentry.logger.error('Processing failed', {
-      action: 'process_error',
-      error: error.message
-    });
+    console.error('[Process] Failed', error.message);
     Sentry.captureException(error);
     res.status(500).json({
       success: false,
@@ -149,9 +138,7 @@ app.get('/status', authenticate, async (req, res) => {
 
 // Scheduled job endpoint (for Render cron)
 app.post('/cron/nightly', authenticate, async (req, res) => {
-  Sentry.logger.info('Nightly cron job triggered', {
-    action: 'cron_start'
-  });
+  console.log('[Cron] Nightly job triggered');
 
   try {
     const result = await processConversations({
@@ -159,18 +146,11 @@ app.post('/cron/nightly', authenticate, async (req, res) => {
       maxMessages: config.maxMessagesPerRun
     });
 
-    Sentry.logger.info('Nightly job completed', {
-      action: 'cron_complete',
-      runId: result.runId,
-      ...result.summary
-    });
+    console.log('[Cron] Nightly job completed', { runId: result.runId, ...result.summary });
 
     res.json({ success: true, ...result });
   } catch (error) {
-    Sentry.logger.error('Nightly job failed', {
-      action: 'cron_error',
-      error: error.message
-    });
+    console.error('[Cron] Nightly job failed', error.message);
     Sentry.captureException(error);
     res.status(500).json({ success: false, error: error.message });
   }
@@ -178,9 +158,7 @@ app.post('/cron/nightly', authenticate, async (req, res) => {
 
 // Test Sentry endpoint (for verification)
 app.get('/debug-sentry', authenticate, (req, res) => {
-  Sentry.logger.info('User triggered test error', {
-    action: 'test_error'
-  });
+  console.log('[Debug] User triggered test error');
 
   try {
     // Intentional error for testing
@@ -453,11 +431,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`HeyReach Outreach Service running on port ${PORT}`);
   console.log(`Environment: ${config.environment}`);
-  console.log(`Sentry: enabled with logging`);
-
-  Sentry.logger.info('Server started', {
-    action: 'server_start',
-    port: PORT,
-    environment: config.environment
-  });
+  console.log(`Sentry: enabled`);
 });
