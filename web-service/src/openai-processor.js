@@ -8,9 +8,10 @@ import { checkAlreadyProcessed, validateResponse } from './knowledge.js';
  * Process conversations using OpenAI with Vector Store RAG
  * Returns drafts for approval (web UI workflow)
  */
-export async function processConversations({ dryRun = true, maxMessages = 30 }) {
+export async function processConversations({ dryRun = true, maxMessages = 30, runId = null }) {
   const startTime = Date.now();
-  const runId = `run_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  // Use provided runId or generate one
+  runId = runId || `run_${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
   const results = {
     runId,

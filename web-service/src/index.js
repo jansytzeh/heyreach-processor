@@ -219,8 +219,8 @@ app.post('/api/runs', authenticate, async (req, res) => {
     message: 'Processing started. Poll GET /api/runs/:id for status.'
   });
 
-  // Process in background (not awaited)
-  processWithOpenAI({ dryRun, maxMessages })
+  // Process in background (not awaited) - pass runId to ensure consistency
+  processWithOpenAI({ dryRun, maxMessages, runId })
     .then(result => {
       console.log(`[API] Run ${runId} completed successfully`);
 
