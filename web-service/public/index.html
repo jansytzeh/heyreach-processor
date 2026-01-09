@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HeyReach Agent Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>HeyReach Agent</h1>
+      <div class="header-status">
+        <span id="status-indicator" class="status-dot"></span>
+        <span id="status-text">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Auth Section (hidden if no password configured) -->
+    <div id="auth-section" class="auth-section hidden">
+      <input type="password" id="password-input" placeholder="Enter Password" onkeypress="if(event.key==='Enter')authenticate()" />
+      <button onclick="authenticate()">Login</button>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <main id="main-content" class="main-content hidden">
+
+      <!-- Stats Bar -->
+      <section class="stats-bar">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-pending">-</span>
+          <span class="stat-label">Pending Drafts</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-sent">-</span>
+          <span class="stat-label">Sent Today</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-rejected">-</span>
+          <span class="stat-label">Rejected</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-auto">-</span>
+          <span class="stat-label">Auto-Approved</span>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section class="controls">
+        <div class="control-group">
+          <h2>Process Conversations</h2>
+          <div class="control-row">
+            <select id="run-mode">
+              <option value="dry_run">Dry Run (Preview Only)</option>
+              <option value="live">Live Mode</option>
+            </select>
+            <input type="number" id="max-messages" value="10" min="1" max="50" />
+            <button id="run-btn" onclick="startRun()">Start Run</button>
+          </div>
+          <div id="run-progress" class="progress hidden">
+            <div class="spinner"></div>
+            <span>Processing...</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h2>Bulk Actions</h2>
+          <button onclick="approveAllEligible()" class="btn-secondary">Approve All Eligible</button>
+          <button onclick="refreshDrafts()" class="btn-secondary">Refresh Drafts</button>
+        </div>
+      </section>
+
+      <!-- Tabs -->
+      <nav class="tabs">
+        <button class="tab active" data-tab="drafts">Pending Drafts</button>
+        <button class="tab" data-tab="runs">Run History</button>
+        <button class="tab" data-tab="config">Configuration</button>
+      </nav>
+
+      <!-- Drafts Tab -->
+      <section id="tab-drafts" class="tab-content active">
+        <div id="drafts-list" class="drafts-list">
+          <p class="empty-state">No pending drafts. Run a processing job to generate drafts.</p>
+        </div>
+      </section>
+
+      <!-- Runs Tab -->
+      <section id="tab-runs" class="tab-content">
+        <div id="runs-list" class="runs-list">
+          <p class="empty-state">No runs yet.</p>
+        </div>
+      </section>
+
+      <!-- Config Tab -->
+      <section id="tab-config" class="tab-content">
+        <div class="config-panel">
+          <h3>Current Configuration</h3>
+          <div id="config-display" class="config-display">
+            <div class="config-item">
+              <span class="config-label">Send Enabled:</span>
+              <span id="config-send-enabled" class="config-value">-</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">Auto-Approve Threshold:</span>
+              <span id="config-threshold" class="config-value">-</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">Primary Model:</span>
+              <span id="config-primary-model" class="config-value">-</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">Review Model:</span>
+              <span id="config-review-model" class="config-value">-</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Draft Detail Modal -->
+    <div id="draft-modal" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+
+        <div class="modal-header">
+          <h2 id="modal-prospect-name">Prospect Name</h2>
+          <span id="modal-confidence" class="confidence-badge">85%</span>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-section">
+            <h4>Prospect Info</h4>
+            <p id="modal-prospect-info"></p>
+          </div>
+
+          <div class="modal-section">
+            <h4>Their Last Message</h4>
+            <div id="modal-last-message" class="message-bubble prospect"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>AI Analysis</h4>
+            <div id="modal-analysis" class="analysis-box"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Proposed Response</h4>
+            <textarea id="modal-message" class="message-editor" rows="6"></textarea>
+          </div>
+
+          <div id="modal-warnings" class="warnings-box hidden"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button onclick="rejectDraft()" class="btn-reject">Reject</button>
+          <button onclick="approveDraft()" class="btn-approve">Approve & Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

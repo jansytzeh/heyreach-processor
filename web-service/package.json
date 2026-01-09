@@ -1,0 +1,26 @@
+{
+  "name": "heyreach-outreach-service",
+  "version": "1.0.0",
+  "description": "Web service for HeyReach LinkedIn outreach automation",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "process": "node src/cli.js process",
+    "process:dry": "node src/cli.js process --dry-run",
+    "health": "node src/cli.js health",
+    "setup:vector-store": "node scripts/setup-vector-store.js",
+    "sync:knowledge": "node scripts/sync-knowledge.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@sentry/node": "^8.0.0",
+    "express": "^4.21.0",
+    "dotenv": "^16.4.5",
+    "openai": "^4.77.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

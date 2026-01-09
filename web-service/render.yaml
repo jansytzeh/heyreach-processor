@@ -1,0 +1,57 @@
+# Render Blueprint for HeyReach Outreach Service
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Main web service
+  - type: web
+    name: heyreach-outreach
+    runtime: node
+    plan: free  # Change to 'starter' for production ($7/mo)
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HEYREACH_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SERVICE_API_KEY
+        generateValue: true  # Auto-generate a secure API key
+      - key: SENTRY_DSN
+        sync: false  # Optional
+      - key: FETCH_LIMIT
+        value: "25"
+      - key: MAX_MESSAGES_PER_RUN
+        value: "30"
+      - key: CLAUDE_MODEL
+        value: "claude-sonnet-4-20250514"
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Cron job for nightly processing
+  - type: cron
+    name: heyreach-nightly
+    runtime: node
+    plan: free
+    schedule: "0 6 * * *"  # Run at 6 AM UTC (adjust to your timezone)
+    buildCommand: npm install
+    startCommand: node src/cli.js process --max=30
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HEYREACH_API_KEY
+        fromService:
+          name: heyreach-outreach
+          type: web
+          envVarKey: HEYREACH_API_KEY
+      - key: ANTHROPIC_API_KEY
+        fromService:
+          name: heyreach-outreach
+          type: web
+          envVarKey: ANTHROPIC_API_KEY
+      - key: SENTRY_DSN
+        fromService:
+          name: heyreach-outreach
+          type: web
+          envVarKey: SENTRY_DSN
