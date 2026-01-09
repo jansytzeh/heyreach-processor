@@ -173,7 +173,7 @@ app.get('/debug-sentry', authenticate, (req, res) => {
 // OpenAI Web Agent API Endpoints
 // ==============================================
 
-// POST /api/runs - Trigger a new processing run
+// POST /api/runs - Trigger a new processing run (async - returns immediately)
 app.post('/api/runs', authenticate, async (req, res) => {
   const {
     mode = 'dry_run',  // 'dry_run' or 'live'
@@ -181,46 +181,69 @@ app.post('/api/runs', authenticate, async (req, res) => {
   } = req.body;
 
   const dryRun = mode === 'dry_run';
+  const runId = `run_${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
-  console.log(`[API] Starting ${mode} run with max ${maxMessages} messages`);
+  console.log(`[API] Starting ${mode} run (${runId}) with max ${maxMessages} messages`);
 
-  try {
-    const result = await processWithOpenAI({
-      dryRun,
-      maxMessages
-    });
-
-    // Store run and drafts
-    runStore.set(result.runId, result);
-
-    for (const draft of result.drafts) {
-      draftStore.set(draft.draftId, draft);
+  // Create initial run record with 'processing' status
+  const initialRun = {
+    runId,
+    mode: dryRun ? 'dry-run' : 'live',
+    status: 'processing',
+    startTime: new Date().toISOString(),
+    drafts: [],
+    autoApproved: [],
+    skipped: [],
+    escalated: [],
+    errors: [],
+    summary: {
+      fetched: 0,
+      processed: 0,
+      drafted: 0,
+      autoApproved: 0,
+      sent: 0,
+      skipped: 0,
+      escalated: 0,
+      errors: 0
     }
+  };
 
-    res.json({
-      success: true,
-      runId: result.runId,
-      mode: result.mode,
-      summary: result.summary,
-      draftsCount: result.drafts.length,
-      drafts: result.drafts.map(d => ({
-        draftId: d.draftId,
-        prospect: d.prospect,
-        action: d.action,
-        confidence: d.confidence,
-        autoApproveEligible: d.autoApproveEligible,
-        messagePreview: d.message ? d.message.substring(0, 100) + '...' : null
-      }))
-    });
+  // Store run immediately so it can be tracked
+  runStore.set(runId, initialRun);
 
-  } catch (error) {
-    console.error('[API] Run failed:', error);
-    Sentry.captureException(error);
-    res.status(500).json({
-      success: false,
-      error: error.message
+  // Return immediately with run ID - processing happens in background
+  res.json({
+    success: true,
+    runId,
+    status: 'processing',
+    message: 'Processing started. Poll GET /api/runs/:id for status.'
+  });
+
+  // Process in background (not awaited)
+  processWithOpenAI({ dryRun, maxMessages })
+    .then(result => {
+      console.log(`[API] Run ${runId} completed successfully`);
+
+      // Update run with results
+      result.status = 'completed';
+      runStore.set(result.runId, result);
+
+      // Store drafts
+      for (const draft of result.drafts || []) {
+        draftStore.set(draft.draftId, draft);
+      }
+    })
+    .catch(error => {
+      console.error(`[API] Run ${runId} failed:`, error);
+      Sentry.captureException(error);
+
+      // Update run with error status
+      const failedRun = runStore.get(runId) || initialRun;
+      failedRun.status = 'failed';
+      failedRun.error = error.message;
+      failedRun.endTime = new Date().toISOString();
+      runStore.set(runId, failedRun);
     });
-  }
 });
 
 // GET /api/runs - List recent runs
@@ -231,9 +254,11 @@ app.get('/api/runs', authenticate, (req, res) => {
     .map(r => ({
       runId: r.runId,
       mode: r.mode,
+      status: r.status || 'completed',
       startTime: r.startTime,
       endTime: r.endTime,
-      summary: r.summary
+      summary: r.summary,
+      error: r.error
     }));
 
   res.json({ runs });

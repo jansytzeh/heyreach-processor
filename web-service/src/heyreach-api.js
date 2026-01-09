@@ -32,7 +32,18 @@ async function heyreachRequest(endpoint, options = {}) {
         throw new Error(`HeyReach API error ${response.status}: ${errorText}`);
       }
 
-      return await response.json();
+      // Handle empty responses gracefully
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        return {}; // Return empty object for empty responses
+      }
+
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.warn('Failed to parse API response as JSON:', responseText.substring(0, 100));
+        return { raw: responseText };
+      }
     } catch (error) {
       if (attempt < maxRetries) {
         console.warn(`API call failed (attempt ${attempt}/${maxRetries}): ${error.message}`);
