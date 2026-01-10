@@ -2,7 +2,8 @@ import OpenAI from 'openai';
 import { config } from './config.js';
 
 const openai = new OpenAI({
-  apiKey: config.openaiApiKey
+  apiKey: config.openaiApiKey,
+  timeout: 60000 // 60 second timeout for API calls
 });
 
 // Vector Store ID for knowledge retrieval
@@ -11,6 +12,18 @@ const VECTOR_STORE_ID = config.openaiVectorStoreId;
 // Models
 const PRIMARY_MODEL = config.openaiPrimaryModel || 'gpt-5-mini';
 const REVIEW_MODEL = config.openaiReviewModel || 'gpt-5';
+
+// Timeout wrapper for API calls
+const API_TIMEOUT = 90000; // 90 seconds max for each API call
+
+function withTimeout(promise, timeoutMs = API_TIMEOUT) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`API call timed out after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+}
 
 /**
  * Generate a response using OpenAI with file_search (RAG)
@@ -28,28 +41,31 @@ export async function generateResponse(conversation, chatroom) {
   const userPrompt = buildUserPrompt(prospect, messages, campaignType);
 
   try {
-    // Primary generation with gpt-5-mini
-    const response = await openai.responses.create({
-      model: PRIMARY_MODEL,
-      tools: [
-        {
-          type: 'file_search',
-          vector_store_ids: [VECTOR_STORE_ID]
+    // Primary generation with gpt-5-mini (with timeout)
+    const response = await withTimeout(
+      openai.responses.create({
+        model: PRIMARY_MODEL,
+        tools: [
+          {
+            type: 'file_search',
+            vector_store_ids: [VECTOR_STORE_ID]
+          }
+        ],
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'outreach_response',
+            schema: RESPONSE_SCHEMA,
+            strict: true
+          }
         }
-      ],
-      input: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'outreach_response',
-          schema: RESPONSE_SCHEMA,
-          strict: true
-        }
-      }
-    });
+      }),
+      API_TIMEOUT
+    );
 
     // Parse the response
     const result = parseResponse(response, { prospect, campaignType, language, lastMessage });
@@ -153,11 +169,11 @@ async function performSecondaryReview(draft, prospect, messages, campaignType, l
 ### 5. REQUIRED ELEMENTS
 ${campaignType === 'cazvid' ? `
 For CazVid advancement:
-- [ ] Missing job posting link (ES: https://cazvid.com/es/vacantes/publicar, EN: https://cazvid.com/en/vacancies/post)
-- [ ] Missing tutorial video (ES: https://youtu.be/mldU26l91ZA, EN: https://youtu.be/Y3l1YJlLWIk)
+- [ ] Missing job posting link (ES: ${config.links.cazvidJobPostingEs}, EN: ${config.links.cazvidJobPostingEn})
+- [ ] Missing tutorial video (ES: ${config.links.cazvidTutorialEs}, EN: ${config.links.cazvidTutorialEn})
 ` : `
 For Agency Leads advancement:
-- [ ] Missing Calendly link (https://calendly.com/jan-at-cazvid/agency-leads)
+- [ ] Missing Calendly link (${config.links.agencyLeadsCalendly})
 - [ ] Not offering sample leads
 `}
 
@@ -187,26 +203,29 @@ Respond with valid JSON matching the schema. Set "reviewed_by_gpt5": true`;
   // Rest of the function continues...
 
   try {
-    const response = await openai.responses.create({
-      model: REVIEW_MODEL,
-      tools: [
-        {
-          type: 'file_search',
-          vector_store_ids: [VECTOR_STORE_ID]
+    const response = await withTimeout(
+      openai.responses.create({
+        model: REVIEW_MODEL,
+        tools: [
+          {
+            type: 'file_search',
+            vector_store_ids: [VECTOR_STORE_ID]
+          }
+        ],
+        input: [
+          { role: 'user', content: reviewPrompt }
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'outreach_response',
+            schema: RESPONSE_SCHEMA,
+            strict: true
+          }
         }
-      ],
-      input: [
-        { role: 'user', content: reviewPrompt }
-      ],
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'outreach_response',
-          schema: RESPONSE_SCHEMA,
-          strict: true
-        }
-      }
-    });
+      }),
+      API_TIMEOUT
+    );
 
     const reviewedResult = parseResponse(response, {
       prospect,
@@ -392,16 +411,15 @@ Write your response in ${language === 'es' ? 'SPANISH' : 'ENGLISH'}. Match the p
 ## REQUIRED LINKS (BY CAMPAIGN)
 
 **CazVid Spanish:**
-- Job posting: https://cazvid.com/es/vacantes/publicar
-- Tutorial video: https://youtu.be/mldU26l91ZA
-- Contact tutorial: https://youtu.be/tJ2z3gGrub4
+- Job posting: ${config.links.cazvidJobPostingEs}
+- Tutorial video: ${config.links.cazvidTutorialEs}
 
 **CazVid English:**
-- Job posting: https://cazvid.com/en/vacancies/post
-- Tutorial video: https://youtu.be/Y3l1YJlLWIk
+- Job posting: ${config.links.cazvidJobPostingEn}
+- Tutorial video: ${config.links.cazvidTutorialEn}
 
 **Agency Leads:**
-- Demo booking: https://calendly.com/jan-at-cazvid/agency-leads
+- Demo booking: ${config.links.agencyLeadsCalendly}
 
 ## DECISION FRAMEWORK
 

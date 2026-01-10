@@ -64,17 +64,18 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
     console.log(`[${runId}] ${eligibleConversations.length} eligible (prospect sent last)`);
 
     // Step 3: Process each conversation
-    let messagesSent = 0;
+    let messagesProcessed = 0;
 
     for (const conversation of eligibleConversations) {
-      // Check message limit
-      if (messagesSent >= maxMessages) {
+      // Check message limit (applies to both dry-run and live mode)
+      if (messagesProcessed >= maxMessages) {
         console.log(`[${runId}] Max messages limit reached (${maxMessages})`);
         break;
       }
 
       const draft = await processOneConversation(conversation, runId);
       results.summary.processed++;
+      messagesProcessed++; // Count ALL processed messages, not just sent ones
 
       // Categorize result
       if (draft.outcome === 'error') {
@@ -112,7 +113,6 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
           results.autoApproved.push(draft);
           results.summary.autoApproved++;
           results.summary.sent++;
-          messagesSent++;
 
           console.log(`[${runId}] Auto-approved & sent to ${draft.prospect.name}`);
 
