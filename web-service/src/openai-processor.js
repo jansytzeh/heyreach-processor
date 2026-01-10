@@ -102,8 +102,8 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
         // Auto-approve and send
         try {
           await heyreach.sendMessage({
-            linkedInAccountId: conversation.linkedInAccountId,
-            conversationId: conversation.conversationId,
+            linkedInAccountId: draft.accountId,
+            conversationId: draft.conversationId,  // Use draft.conversationId (extracted from conversation.id)
             message: draft.message
           });
 
