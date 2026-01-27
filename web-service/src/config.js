@@ -43,13 +43,13 @@ export const config = {
   // Campaign IDs (from your config - IN_PROGRESS campaigns)
   campaignIds: [223998, 240191, 274509, 181549, 180990, 180988],
 
-  // Product links (synced with config.md)
+  // Product links
   links: {
     cazvidJobPostingEs: 'https://share.cazvid.app/i/link/67cc2d42-9bcd-4632-87d9-fb3a5f43deac',
     cazvidJobPostingEn: 'https://share.cazvid.app/i/link/be54bb1c-c720-4330-9aeb-ddcdf4c37d84',
-    cazvidTutorialEs: 'https://youtu.be/c0E8sfSFqeM',
-    cazvidTutorialEn: 'https://youtu.be/mldU26l91ZA',
-    agencyLeadsCalendly: 'https://calendly.com/agency-leads/agency-leads-premium-staffing-leads-c0100'
+    cazvidTutorialEs: 'https://www.youtube.com/watch?v=WiIZfnJ_1WI',
+    cazvidTutorialEn: 'https://www.youtube.com/watch?v=Fkjr_4J5gw4',
+    agencyLeadsCalendly: 'https://calendly.com/agency-leads/30min'
   },
 
   // Pricing truth

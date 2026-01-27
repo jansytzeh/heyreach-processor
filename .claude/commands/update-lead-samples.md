@@ -15,43 +15,34 @@ Ask the user which mode to run:
 
 ## Mode: Auto (Recommended)
 
-### Pre-Flight Health Check with Auto-Retry
+### Pre-Flight Health Check
 
-MCP connections can be temporarily unavailable. Implement automatic retries before falling back.
+Test the API connection:
 
-```
-Attempt 1: mcp__heyreach__get_all_linked_in_accounts with limit: 1
-  ↓ If "No such tool available"
-  Wait 2 seconds
-  ↓
-Attempt 2: mcp__heyreach__get_all_linked_in_accounts with limit: 1
-  ↓ If "No such tool available"
-  Wait 5 seconds
-  ↓
-Attempt 3: mcp__heyreach__get_all_linked_in_accounts with limit: 1
-  ↓ If "No such tool available"
-  Fall back to Manual mode
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File ./test-api.ps1
 ```
 
-Wait command: `timeout /t N /nobreak >nul 2>&1 || sleep N`
-
-If all 3 attempts fail, inform user and switch to Manual mode.
+If this fails after 3 retries, switch to Manual mode.
 
 ### Steps
 
 1. **Find Agency Leads list:**
-   ```
-   mcp__heyreach__get_all_lists
-     keyword: "Agency Leads"
-     listType: "USER_LIST"
-     limit: 10
+   ```bash
+   powershell -NoProfile -ExecutionPolicy Bypass -Command "
+     . './heyreach-api.ps1'
+     Set-HeyReachApiKey -ApiKey 'MOUg/+IrTkTdT/jnZ4lfDePCCPhefADsWhmNFW1vuT4='
+     Get-HeyReachLists -Keyword 'Agency Leads' -ListType 'USER_LIST' -Limit 10 | ConvertTo-Json -Depth 10
+   "
    ```
 
 2. **Fetch leads from the list:**
-   ```
-   mcp__heyreach__get_leads_from_list
-     listId: [found list ID]
-     limit: 20
+   ```bash
+   powershell -NoProfile -ExecutionPolicy Bypass -Command "
+     . './heyreach-api.ps1'
+     Set-HeyReachApiKey -ApiKey 'MOUg/+IrTkTdT/jnZ4lfDePCCPhefADsWhmNFW1vuT4='
+     Get-HeyReachLeadsFromList -ListId [found list ID] -Limit 20 | ConvertTo-Json -Depth 10
+   "
    ```
 
 3. **Select 3 diverse leads:**

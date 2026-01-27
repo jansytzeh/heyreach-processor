@@ -378,31 +378,6 @@ Also create session summary at `training/sessions/YYYY-MM-DD-session-N.md`:
 
 ---
 
-## Sync to Web Agent (IMPORTANT)
-
-After training sessions that modify knowledge files, sync changes to the OpenAI Vector Store:
-
-```bash
-cd web-service
-npm run sync:knowledge
-```
-
-This updates the web agent's knowledge base with your training improvements.
-
-**Files that trigger sync:**
-- `agent-persona.md`
-- `config.md`
-- `training/knowledge-base.md`
-- `training/conversation-analysis-framework.md`
-- `training/quality-rubric.md`
-- `training/edge-cases.md`
-- `training/deal-tracking.md`
-- `training/curriculum.md`
-
-**Always remind the user at the end of training:** "Knowledge files updated. Run `cd web-service && npm run sync:knowledge` to sync to the web agent."
-
----
-
 ## Error Handling
 
 When errors occur:

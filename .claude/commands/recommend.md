@@ -12,10 +12,12 @@ Analyze the current system state and recommend what to train on next.
    - `training/quality-rubric.md` - Quality benchmarks
 
 2. **Check conversation tags:**
-   ```
-   mcp__heyreach__get_conversations_v2
-     seen: true
-     limit: 25
+   ```bash
+   powershell -NoProfile -ExecutionPolicy Bypass -Command "
+     . './heyreach-api.ps1'
+     Set-HeyReachApiKey -ApiKey 'MOUg/+IrTkTdT/jnZ4lfDePCCPhefADsWhmNFW1vuT4='
+     Get-HeyReachConversations -LinkedInAccountIds (Get-HeyReachLinkedInAccountsFromConfig) -Seen `$true -Limit 25 | ConvertTo-Json -Depth 10
+   "
    ```
    Count conversations with each tag type.
 

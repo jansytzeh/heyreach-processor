@@ -109,6 +109,47 @@ Set-HeyReachApiKey -ApiKey "MOUg/+IrTkTdT/jnZ4lfDePCCPhefADsWhmNFW1vuT4="
 | **Tutorial Video** | `https://youtu.be/c0E8sfSFqeM` | `https://youtu.be/mldU26l91ZA` |
 | **Platform Intro** | `https://youtu.be/XJZcKKnymcU` | `https://youtu.be/XJZcKKnymcU` |
 
+### CazVid Job Seeker Link
+
+| Purpose | Link |
+|---------|------|
+| **Job Seeker Registration** | `https://cazvid.app.link` |
+
+> When someone says they're looking for a job (not hiring), redirect them to register as a job seeker at this link.
+
+### CazVid Weekly Webinar/Demo (INBOUND ONLY)
+
+> **CRITICAL:** Only offer this when the prospect REQUESTS a demo/call FIRST. Do NOT proactively offer webinars.
+
+| Language | Schedule | Booking URL |
+|----------|----------|-------------|
+| **Spanish** | Wednesdays 10:00-10:30 AM Pacific | `https://calendly.com/cazvid/demo-es` |
+| **English** | Wednesdays 11:00-11:30 AM Pacific | `https://calendly.com/cazvid/demo-en` |
+
+**When to use:**
+- Prospect explicitly asks for a demo, call, or meeting
+- Prospect says "Can we schedule a call?" or "I'd like a demo"
+- Prospect asks to see the platform in action
+
+**When NOT to use:**
+- Proactively offering demos (don't do this)
+- Agency Leads conversations (this is CazVid only)
+- Prospect just has questions (answer them, don't push demo)
+
+**Example Response (Spanish):**
+```
+¡Claro [Name]! Hacemos webinars semanales los miércoles de 10:00 a 10:30 AM hora del Pacífico. Puedes reservar tu lugar aquí: https://calendly.com/cazvid/demo-es
+
+¿Te funcionaría ese horario?
+```
+
+**Example Response (English):**
+```
+Of course [Name]! We do weekly webinars on Wednesdays from 11:00 to 11:30 AM Pacific time. You can reserve your spot here: https://calendly.com/cazvid/demo-en
+
+Would that work for you?
+```
+
 ### Agency Leads Links
 
 | Purpose | Link |
@@ -163,8 +204,14 @@ Set-HeyReachApiKey -ApiKey "MOUg/+IrTkTdT/jnZ4lfDePCCPhefADsWhmNFW1vuT4="
 
 ---
 
-## Already Processed Detection
+## Already Processed Detection (CRITICAL - Prevent Double Messages)
 
+### Rule 1: Check lastMessageSender FIRST
+**Before doing ANYTHING else, check `lastMessageSender`:**
+- If `lastMessageSender == "ME"` → **SKIP** (we're waiting for their reply)
+- If `lastMessageSender == "CORRESPONDENT"` → Continue to Rule 2
+
+### Rule 2: Check for patterns in OUR previous messages
 Skip conversations where we already sent these patterns:
 
 | Pattern in Our Messages | Meaning |
@@ -175,6 +222,15 @@ Skip conversations where we already sent these patterns:
 | `timing, fit, or need` | We asked for decline reason |
 | `¿Qué te parecieron los perfiles?` | We already probed |
 | `What did you think of the profiles?` | We already probed |
+| `I'll have Jan` or `Jan will` | We escalated to Jan |
+| `Let me know how it goes` | We already acknowledged |
+| `Let me know if any` | We already responded |
+
+### Rule 3: Never respond twice to the same message
+If the prospect's last message timestamp is OLDER than our last message timestamp → **SKIP**
+
+### Rule 4: Track within a run
+Keep a list of conversation IDs you've responded to in THIS run. Never respond to the same conversation twice in the same run.
 
 ---
 
@@ -196,6 +252,73 @@ Skip conversations where we already sent these patterns:
 | 103961 | Shadai Escalona | Escalona |
 | 106125 | Emile Ledaine | Ledaine |
 | 118434 | Camila Martinez | Martinez |
+
+---
+
+## Decline Response Guidelines (CRITICAL)
+
+When a prospect says they're **not interested**, **declines**, or gives a **soft no**, you MUST use the "timing, fit, or need" response pattern.
+
+### The Core Response Pattern
+
+**English:**
+```
+Totally understand, [Name]. Just curious—was it timing, fit, or need that made it not the right match? Either way, appreciate you letting me know.
+```
+
+**Spanish:**
+```
+Entendido, [Name]. Solo por curiosidad—¿fue el timing, el fit, o la necesidad lo que no cuadró? De cualquier manera, gracias por avisarme.
+```
+
+### Why This Works
+
+- **Non-confrontational:** "Just curious" disarms defensiveness
+- **Multiple choice:** Gives them easy options to explain
+- **Graceful exit:** "Appreciate you letting me know" respects their decision
+- **Intel gathering:** Their answer helps us understand objections
+
+### Detection Phrases (Use This Response)
+
+**English:**
+- "not interested" / "I'm not interested"
+- "not for me" / "not for us"
+- "we're all set" / "we're good"
+- "no thanks" / "no thank you"
+- "pass" / "I'll pass"
+- "not looking" / "not hiring"
+
+**Spanish:**
+- "no me interesa" / "no nos interesa"
+- "no gracias"
+- "estamos bien" / "ya estamos cubiertos"
+- "paso" / "no por ahora"
+- "no estamos buscando"
+
+### DO NOT Use This Response When:
+
+- They already gave a specific reason (wrong target, location, etc.)
+- They explicitly asked to stop contacting them
+- They've declined multiple times already
+- It's clearly a wrong target (BPO, freelancer, job seeker)
+
+### Example Variations (for natural variation)
+
+**English alternatives:**
+```
+Got it, [Name]. Was it more about timing, or just not the right fit right now?
+```
+```
+No worries at all, [Name]. If you don't mind me asking—timing, fit, or something else?
+```
+
+**Spanish alternatives:**
+```
+Perfecto, [Name]. ¿Fue más por el timing o simplemente no es el fit correcto ahora?
+```
+```
+Sin problema, [Name]. Si me permites preguntar—¿timing, fit, o algo más?
+```
 
 ---
 
@@ -224,6 +347,7 @@ Skip conversations where we already sent these patterns:
 | Push BPO/outsourcing companies | Wrong target, wastes time |
 | Fabricate context they didn't mention | Creepy, breaks trust |
 | Use ALL CAPS names | Looks robotic |
+| Use escaped characters (`\!` `\?`) | Looks broken, unprofessional - use plain `!` and `?` |
 
 ### ALWAYS Do
 
@@ -259,6 +383,43 @@ These companies SELL workers, they don't BUY candidates. Not our target.
 - "I'm an independent recruiter"
 
 **Action:** Close gracefully, our products work best for companies/agencies.
+
+### Job Seekers (Redirect to CazVid App)
+
+These are people LOOKING FOR A JOB, not hiring. Redirect them helpfully.
+
+**Detection phrases (English):**
+- "looking for a job" / "looking for work"
+- "I'm job hunting" / "job searching"
+- "looking for opportunities" / "open to opportunities"
+- "I'm unemployed" / "between jobs"
+- "do you have any openings" / "are you hiring"
+
+**Detection phrases (Spanish):**
+- "busco trabajo" / "buscando trabajo"
+- "busco empleo" / "buscando empleo"
+- "estoy desempleado" / "sin trabajo"
+- "busco oportunidades" / "tienen vacantes para mí"
+
+**Action:** Redirect warmly to CazVid job seeker registration: `https://cazvid.app.link`
+
+**Example Response (English):**
+```
+Hi [Name]! Actually, we help companies find candidates - but great news: you can register as a job seeker on CazVid and get matched with employers looking for people like you!
+
+Sign up here: https://cazvid.app.link
+
+Good luck with your search!
+```
+
+**Example Response (Spanish):**
+```
+¡Hola [Name]! Nosotros ayudamos a empresas a encontrar candidatos, pero tengo buenas noticias: puedes registrarte como buscador de empleo en CazVid y conectarte con empleadores que buscan personas como tú.
+
+Regístrate aquí: https://cazvid.app.link
+
+¡Éxito en tu búsqueda!
+```
 
 ---
 

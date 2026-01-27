@@ -1,19 +1,19 @@
-$inputFile = $args[0]
-$data = (Get-Content $inputFile | ConvertFrom-Json)[0].text | ConvertFrom-Json
-$filtered = $data.items | Where-Object { $_.lastMessageSender -eq 'CORRESPONDENT' }
+param(
+    [string]$InputFile
+)
 
-Write-Host "Total needing response: $($filtered.Count)"
-Write-Host ""
+$data = Get-Content $InputFile -Raw | ConvertFrom-Json
+$eligible = $data.items | Where-Object { $_.lastMessageSender -eq "CORRESPONDENT" }
 
-$filtered | Select-Object -First 60 | ForEach-Object {
-    $msgLen = [Math]::Min(100, $_.lastMessageText.Length)
-    $msg = $_.lastMessageText.Substring(0, $msgLen)
-    if ($_.lastMessageText.Length -gt 100) { $msg += "..." }
+Write-Output "Total: $($data.totalCount), Eligible (CORRESPONDENT): $($eligible.Count)"
+Write-Output ""
 
-    Write-Host "---"
-    Write-Host "ID: $($_.id)"
-    Write-Host "AccountId: $($_.linkedInAccountId)"
-    Write-Host "Name: $($_.correspondentProfile.firstName) $($_.correspondentProfile.lastName)"
-    Write-Host "Campaign: $($_.campaignId)"
-    Write-Host "Message: $msg"
+$eligible | Select-Object -First 60 | ForEach-Object {
+    Write-Output "---"
+    Write-Output "ID: $($_.id)"
+    Write-Output "Name: $($_.correspondentProfile.firstName) $($_.correspondentProfile.lastName)"
+    Write-Output "Headline: $($_.correspondentProfile.headline)"
+    Write-Output "Account: $($_.linkedInAccountId)"
+    Write-Output "Last Message: $($_.lastMessageText)"
+    Write-Output ""
 }

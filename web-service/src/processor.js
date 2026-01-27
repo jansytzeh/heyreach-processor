@@ -28,20 +28,40 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
   };
 
   try {
-    // Step 1: Fetch unseen conversations
+    // Step 1: Fetch ALL unseen conversations with pagination
     console.log('Fetching unseen conversations', { runId });
 
-    const conversationsResponse = await heyreach.getConversations({
-      linkedInAccountIds: config.linkedInAccountIds,
-      campaignIds: config.campaignIds,
-      seen: false,
-      limit: config.fetchLimit
-    });
+    // Note: Do NOT filter by campaignIds - we want ALL unseen conversations
+    // across all accounts, not just from specific campaigns
+    const conversations = [];
+    let offset = 0;
+    const pageSize = 100; // Max allowed by API
+    let hasMore = true;
 
-    const conversations = conversationsResponse?.items || [];
+    while (hasMore) {
+      const response = await heyreach.getConversations({
+        linkedInAccountIds: config.linkedInAccountIds,
+        seen: false,
+        limit: pageSize,
+        offset: offset
+      });
+
+      const items = response?.items || [];
+      conversations.push(...items);
+
+      console.log('Fetched page', { runId, offset, count: items.length, total: conversations.length });
+
+      // Check if there are more pages
+      if (items.length < pageSize) {
+        hasMore = false;
+      } else {
+        offset += pageSize;
+      }
+    }
+
     results.summary.fetched = conversations.length;
 
-    console.log('Conversations fetched', { runId, count: conversations.length });
+    console.log('All conversations fetched', { runId, count: conversations.length });
 
     if (conversations.length === 0) {
       results.endTime = new Date().toISOString();
@@ -114,7 +134,7 @@ export async function processConversations({ dryRun = false, maxMessages = 30 })
  */
 async function processOneConversation(conversation, dryRun, runId) {
   // Note: API returns 'id' for conversation ID, not 'conversationId'
-  const conversationId = conversation.id || conversationId;
+  const conversationId = conversation.id;
 
   const result = {
     conversationId: conversationId,

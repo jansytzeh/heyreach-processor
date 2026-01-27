@@ -226,28 +226,15 @@ function renderRuns(runs) {
         <span class="run-mode ${run.mode === 'live' ? 'live' : 'dry-run'}">
           ${run.mode === 'live' ? 'LIVE' : 'DRY RUN'}
         </span>
-        <span class="run-status ${run.status || 'completed'}">
-          ${getStatusLabel(run.status)}
-        </span>
         <span class="run-time">${formatTime(run.startTime)}</span>
       </div>
       <div class="run-stats">
         <span>Drafted: ${run.summary?.drafted || 0}</span>
         <span>Sent: ${run.summary?.sent || 0}</span>
         <span>Skipped: ${run.summary?.skipped || 0}</span>
-        ${run.error ? `<span class="run-error">Error: ${escapeHtml(run.error)}</span>` : ''}
       </div>
     </div>
   `).join('');
-}
-
-function getStatusLabel(status) {
-  switch (status) {
-    case 'processing': return '⏳ Processing';
-    case 'completed': return '✓ Complete';
-    case 'failed': return '✗ Failed';
-    default: return '✓ Complete';
-  }
 }
 
 // Start a processing run
@@ -270,10 +257,8 @@ async function startRun() {
     const data = await response.json();
 
     if (data.success) {
-      showToast(`Processing started (${data.runId})`, 'success');
-
-      // Poll for completion
-      await pollRunCompletion(data.runId);
+      showToast(`Run complete: ${data.draftsCount} drafts generated`, 'success');
+      await loadDashboard();
     } else {
       showToast('Run failed: ' + (data.error || 'Unknown error'), 'error');
     }
@@ -283,45 +268,6 @@ async function startRun() {
     runBtn.disabled = false;
     progress.classList.add('hidden');
   }
-}
-
-// Poll for run completion
-async function pollRunCompletion(runId) {
-  const maxAttempts = 60; // 5 minutes max (5s intervals)
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    attempts++;
-    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-
-    try {
-      const response = await apiCall(`/api/runs/${runId}`);
-      const run = await response.json();
-
-      if (run.status === 'completed') {
-        const drafted = run.summary?.drafted || 0;
-        const sent = run.summary?.sent || 0;
-        showToast(`Run complete: ${drafted} drafts, ${sent} sent`, 'success');
-        await loadDashboard();
-        return;
-      } else if (run.status === 'failed') {
-        showToast(`Run failed: ${run.error || 'Unknown error'}`, 'error');
-        await loadDashboard();
-        return;
-      }
-
-      // Still processing - update UI
-      const processed = run.summary?.processed || 0;
-      const fetched = run.summary?.fetched || 0;
-      console.log(`[Poll] Run ${runId}: ${processed}/${fetched} processed`);
-
-    } catch (error) {
-      console.error('Poll error:', error);
-    }
-  }
-
-  showToast('Processing timeout - check runs history', 'warning');
-  await loadDashboard();
 }
 
 // Approve all eligible drafts

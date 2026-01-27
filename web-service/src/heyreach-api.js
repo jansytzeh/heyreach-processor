@@ -32,18 +32,7 @@ async function heyreachRequest(endpoint, options = {}) {
         throw new Error(`HeyReach API error ${response.status}: ${errorText}`);
       }
 
-      // Handle empty responses gracefully
-      const responseText = await response.text();
-      if (!responseText || responseText.trim() === '') {
-        return {}; // Return empty object for empty responses
-      }
-
-      try {
-        return JSON.parse(responseText);
-      } catch (parseError) {
-        console.warn('Failed to parse API response as JSON:', responseText.substring(0, 100));
-        return { raw: responseText };
-      }
+      return await response.json();
     } catch (error) {
       if (attempt < maxRetries) {
         console.warn(`API call failed (attempt ${attempt}/${maxRetries}): ${error.message}`);
@@ -74,14 +63,15 @@ export async function getConversations({
   linkedInAccountIds = [],
   campaignIds = [],
   seen = null,
-  limit = 100
+  limit = 100,
+  offset = 0
 }) {
   const body = {
     filters: {
       linkedInAccountIds,
       campaignIds
     },
-    offset: 0,
+    offset,
     limit: Math.min(limit, 100)
   };
 

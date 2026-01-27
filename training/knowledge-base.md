@@ -1,7 +1,7 @@
 # HeyReach AI Training Knowledge Base
 
-> Last Updated: 2026-01-08
-> Version: 3.1.0
+> Last Updated: 2026-01-12
+> Version: 3.3.0
 
 This document contains accumulated learnings from training sessions. Combined with `agent-persona.md`, it forms the agent's intelligence.
 
@@ -20,6 +20,47 @@ As of v3.0, the system uses an **intelligent Business Developer Agent**, not tem
 | `deal-tracking.md` | Pipeline stage system |
 
 **The agent analyzes each conversation contextually and crafts intelligent responses.**
+
+---
+
+## Hierarchy of Goals (CRITICAL)
+
+> Added: 2026-01-12 | Source: Jan's direct feedback on conversation handling
+
+**Understanding the conversion funnel is ESSENTIAL for crafting effective responses.**
+
+| Priority | Goal | How It Happens | Why It Matters |
+|----------|------|----------------|----------------|
+| **1. POST A JOB** | Get them to post a job on CazVid | Via platform OR direct link | Entry point - even before signup |
+| **2. SIGN UP** | Get them to sign up for CazVid | Auto-signup on posting OR login prompt when contacting | Creates account relationship |
+| **3. CONTACT CANDIDATES** | Get them to pay $50/month and contact candidates | After seeing candidates they want | Highest value but hardest to achieve |
+
+**Critical Insight:** Posting a job can happen BEFORE signup (the post triggers signup). Contacting a candidate requires login, which prompts signup. Everything leads to the ultimate goal: **getting them to contact candidates**.
+
+### How This Affects Messaging
+
+1. **Primary CTA = Post a Job** (most accessible)
+   - "Post your job for free here: [link]"
+   - This triggers the signup naturally
+
+2. **Secondary CTA = Contact Candidates** (if they've seen profiles)
+   - Use video tutorials to explain how
+   - Spanish: https://youtu.be/c0E8sfSFqeM
+   - English: https://youtu.be/mldU26l91ZA
+
+3. **ALWAYS include a CTA** - Never send a message without directing them toward an action
+
+### Video Tutorial URLs
+
+| Language | URL | When to Use |
+|----------|-----|-------------|
+| **Spanish** | https://youtu.be/c0E8sfSFqeM | When explaining how to contact candidates (ES) |
+| **English** | https://youtu.be/mldU26l91ZA | When explaining how to contact candidates (EN) |
+
+**Use these videos when:**
+- Prospect asks how to contact candidates
+- Prospect asks about next steps after seeing profiles
+- Closing a conversation where they seem interested
 
 ---
 
@@ -42,6 +83,9 @@ As of v3.0, the system uses an **intelligent Business Developer Agent**, not tem
 | **NEVER skip required links** | Missing links = failed conversion opportunity |
 | **NEVER skip YouTube tutorial** | Missing tutorial = confused prospect |
 | **NEVER push after clear decline** | Damages reputation |
+| **ALWAYS include a CTA** | Every message must drive action - no "dead end" messages |
+| **NEVER give up too soon** | If they seem covered, offer demo/challenge (see EC-061) |
+| **ALWAYS use conversation context** | Don't ask questions already answered in history |
 
 ### CazVid Pricing Truth
 
@@ -309,6 +353,17 @@ with open(filepath, 'r') as f:
 | EC-051 | Request Misclassification | PDF Request vs CV/Email Request | **CHECK HISTORY** - if candidates sent, use PDF Request |
 | EC-052 | More Candidates Request | "Send me more candidates" | **RESPOND** - redirect to POST A JOB for automatic flow |
 | EC-053 | Recruiter CazVid Pitch | Recruiter asks about CazVid | **RESPOND** - add recruiter-specific value (unlimited posts, scale) |
+| EC-054 | Job Seeker | "Looking for a job" / "Busco trabajo" | **REDIRECT** - send to cazvid.app.link for job seeker registration |
+| EC-055 | Link Trust Question | "Is this link safe/trust?" | **RESPOND** - confirm official, explain UTM, offer Google search alternative |
+| EC-056 | Platform Hesitation | "Not looking to join platforms" | **RESPOND** - address friction (just email, no subscription required) |
+| EC-057 | Not Decision Maker | "I'm not involved in purchasing" | **RESPOND** - ask for referral to right person |
+| EC-058 | Wrong Company Info | "I don't work at [Company]" | **RESPOND** - acknowledge briefly, ask if still in role |
+| EC-059 | Phone Number Request | "Can I call you?" / "What's your number?" | **RESPOND** - provide phone + WhatsApp, still redirect to platform |
+| EC-060 | Counter-Pitch | Someone pitches their services TO us | **RESPOND** - polite decline, pivot to CazVid as alternative |
+| EC-061 | Gave Up Too Soon | "All set" / "Candidate scarce market" | **CHALLENGE** - offer demo game, don't close conversation |
+| EC-062 | Missing CTA | Message lacks call-to-action | **GUARDRAIL** - always include CTA in every message |
+| EC-063 | Context Not Used | Ask question already answered | **GUARDRAIL** - check history before asking questions |
+| EC-064 | Demo Request (Inbound) | "Can we schedule a call?" | **RESPOND** - offer weekly webinar link (CazVid only, inbound only) |
 
 ---
 
@@ -580,6 +635,66 @@ with open(filepath, 'r') as f:
 1. When prospect asks about candidates WE ALREADY SENT → Use PDF Request template
 2. When prospect says "will review/check" → EXCLUDE or minimal response
 3. Dual-intent messages should address BOTH parts naturally (like George Lopez case)
+
+### Session 8 (2026-01-12) - Learn from Jan's Manual Responses (Mode 2)
+- Reviewed 11 conversations tagged "Manual Handled Jan"
+- **Purpose:** Extract communication patterns from Jan's expert handling
+
+**Conversations Analyzed:**
+| Name | Situation | Jan's Pattern |
+|------|-----------|---------------|
+| Silpa Nayak | "Please forward your number / I'll call you" | Phone + WhatsApp + platform link |
+| Sarah Jones | She pitched TO us (BPO services) | Polite decline + pivot to CazVid |
+| Harlee Chapman | "Send to my email" for samples | Redirect to call for "bigger sample" |
+| Sara Drake | "I don't work at Everstaff" | Acknowledge + ask if still in BD |
+| Sandra Wallace | "Hi, how are you doing today?" | Answer + redirect to business |
+| Mahmoud Abdelaziz | "Is this link trust?" | Confirm official + explain UTM + Google alternative |
+| Hanson Raju | "Not currently recruiting" | Probe deeper: "What is stopping you?" |
+| Sobia Sajid | "We are based in Karachi" (wrong location) | Confirm we have candidates there + offer |
+| Daniela Volio | "Not looking to join platforms" | Address friction: just email, no subscription |
+| Joanna Toro | "I'm not involved in purchasing" | Ask for referral to right person |
+| Reid Orlando | "No thank you" | Standard timing/fit/need + "I'll tag correctly" |
+
+**New Patterns Discovered (6):**
+
+1. **Phone Number Request (EC-059)**
+   - Provide phone + WhatsApp: +16233047338
+   - Still redirect to platform
+
+2. **Counter-Pitch (EC-060)**
+   - Polite decline: "thanks but this does not apply to me"
+   - Pivot to CazVid as alternative
+
+3. **Link Trust Question (EC-055)**
+   - Confirm legitimacy
+   - Explain UTM = marketing tracking
+   - Offer Google search alternative
+
+4. **Platform Hesitation (EC-056)**
+   - Address friction: "just email, no subscription"
+   - Soft language: "Might you feel it appropriate"
+
+5. **Not Decision Maker (EC-057)**
+   - Short acknowledgment: "Sounds good"
+   - Direct referral request: "Is there any specific person I should reach out to?"
+
+6. **Wrong Company Info (EC-058)**
+   - Brief acknowledgment: "Got it"
+   - Clarifying question to stay in conversation
+   - No excessive apology
+
+**Key Jan Communication Principles:**
+1. **Never refuse outright** - Always "yes, and..." with platform/call as next step
+2. **Address objections directly** - Don't ignore friction, tackle it head-on
+3. **Keep it short** - Brief acknowledgments, no over-explaining
+4. **Always ask a question** - Keeps conversation alive
+5. **Soft closes work** - "Let me know if...", "Might you feel it appropriate..."
+6. **Warm sign-offs** - "Have a great weekend!", "Thanks for reaching out"
+
+**Patterns Confirmed:**
+- EC-040 Casual Greeting: Sandra Wallace - redirect to business immediately
+- EC-004 Location Mismatch: Sobia Sajid - confirm we have candidates + offer
+- Timing/Fit/Need Decline: Reid Orlando - standard pattern + "I'll tag correctly"
 
 ---
 
@@ -872,3 +987,58 @@ As a recruiter, CazVid can be especially valuable - you get unlimited posts, unl
 **Do NOT confuse with Agency Leads:**
 - Agency Leads = Leads to companies hiring (for staffing agencies placing candidates)
 - CazVid for Recruiters = Access to candidates (for anyone hiring, but extra valuable for high-volume recruiters)
+
+---
+
+### Session 9 (2026-01-12) - Jan's Direct Feedback on AI Handling
+
+> Source: Jan reviewed 4 specific conversations and provided feedback + general learnings
+
+**Conversations Reviewed:**
+
+| Conv ID | Issue | Feedback |
+|---------|-------|----------|
+| 2-Zjg2MzkwMTkt... | Missing CTA | "Message lacks a CTA. We should always send activating messages." |
+| 2-ZWMxZDUzZjct... | Context ignored | "Did not use context. We asked about customer service, they said yes, then we asked if they have any job." |
+| 2-YzE4ZTdkYTIt... | ✅ Good example | "No critics, just very good job here" |
+| 2-MzdlZTU5YjEt... (Corey Lee) | Gave up too soon | "If he really thinks he has everything let's review it in a demo. Make it a game." |
+
+**Critical New Framework - Hierarchy of Goals:**
+
+Jan clarified the conversion funnel priority:
+
+1. **POST A JOB** → Entry point (can happen before signup)
+2. **SIGN UP** → Auto-triggers from posting
+3. **CONTACT CANDIDATES** → Ultimate goal ($50/month)
+
+**Key insight:** Posting triggers signup. Everything leads to contacting candidates.
+
+**Video Tutorial URLs Added:**
+- Spanish: https://youtu.be/c0E8sfSFqeM
+- English: https://youtu.be/mldU26l91ZA
+
+**New Guardrails Added:**
+1. **ALWAYS include CTA** - No dead-end messages
+2. **NEVER give up too soon** - Offer demo challenge instead
+3. **ALWAYS use context** - Don't ask questions already answered
+
+**Edge Cases Added:**
+- EC-061: Gave Up Too Soon - When prospect says "all set" or mentions problem we solve, challenge with demo
+- EC-062: Missing CTA - Every message must have an action
+- EC-063: Context Not Used - Check history before asking questions
+
+**CSV User Export Analysis:**
+- Jan shared 3 CSV exports of CazVid signups
+- These are users who signed up via LinkedIn outreach
+- Used for tracking conversion success
+
+**Key Jan Quotes:**
+- "We should always send activating messages"
+- "Make it a game" (for demo challenges)
+- "The goal is to get them to contact candidates"
+
+**Weekly Webinar Added (EC-064):**
+- Spanish: Wednesdays 10:00-10:30 AM Pacific → https://calendly.com/cazvid/demo-es
+- English: Wednesdays 11:00-11:30 AM Pacific → https://calendly.com/cazvid/demo-en
+- **CRITICAL:** Only offer when prospect REQUESTS demo first (inbound only)
+- CazVid only - not for Agency Leads

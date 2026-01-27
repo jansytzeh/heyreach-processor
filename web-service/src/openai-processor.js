@@ -8,10 +8,9 @@ import { checkAlreadyProcessed, validateResponse } from './knowledge.js';
  * Process conversations using OpenAI with Vector Store RAG
  * Returns drafts for approval (web UI workflow)
  */
-export async function processConversations({ dryRun = true, maxMessages = 30, runId = null }) {
+export async function processConversations({ dryRun = true, maxMessages = 30 }) {
   const startTime = Date.now();
-  // Use provided runId or generate one
-  runId = runId || `run_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  const runId = `run_${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
   const results = {
     runId,
@@ -64,18 +63,17 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
     console.log(`[${runId}] ${eligibleConversations.length} eligible (prospect sent last)`);
 
     // Step 3: Process each conversation
-    let messagesProcessed = 0;
+    let messagesSent = 0;
 
     for (const conversation of eligibleConversations) {
-      // Check message limit (applies to both dry-run and live mode)
-      if (messagesProcessed >= maxMessages) {
+      // Check message limit
+      if (messagesSent >= maxMessages) {
         console.log(`[${runId}] Max messages limit reached (${maxMessages})`);
         break;
       }
 
       const draft = await processOneConversation(conversation, runId);
       results.summary.processed++;
-      messagesProcessed++; // Count ALL processed messages, not just sent ones
 
       // Categorize result
       if (draft.outcome === 'error') {
@@ -103,8 +101,8 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
         // Auto-approve and send
         try {
           await heyreach.sendMessage({
-            linkedInAccountId: draft.accountId,
-            conversationId: draft.conversationId,  // Use draft.conversationId (extracted from conversation.id)
+            linkedInAccountId: conversation.linkedInAccountId,
+            conversationId: conversation.conversationId,
             message: draft.message
           });
 
@@ -113,6 +111,7 @@ export async function processConversations({ dryRun = true, maxMessages = 30, ru
           results.autoApproved.push(draft);
           results.summary.autoApproved++;
           results.summary.sent++;
+          messagesSent++;
 
           console.log(`[${runId}] Auto-approved & sent to ${draft.prospect.name}`);
 
@@ -173,21 +172,26 @@ async function processOneConversation(conversation, runId) {
   };
 
   try {
-    // Use data from conversation object (GetConversationsV2 includes messages)
-    // No need for separate getChatroom call
-    const correspondent = conversation?.correspondentProfile || conversation?.correspondent || {};
+    // Get full chatroom with all messages
+    const chatroom = await heyreach.getChatroom(
+      conversation.linkedInAccountId,
+      conversationId
+    );
+
+    // Extract prospect info
+    const correspondent = chatroom?.correspondent || conversation?.correspondent || {};
     draft.prospect = {
-      name: correspondent.fullName || `${correspondent.firstName || ''} ${correspondent.lastName || ''}`.trim() || 'Unknown',
+      name: correspondent.fullName || correspondent.firstName || 'Unknown',
       firstName: correspondent.firstName || '',
       lastName: correspondent.lastName || '',
       company: correspondent.companyName || '',
       headline: correspondent.headline || '',
       location: correspondent.location || '',
-      profileUrl: correspondent.profileUrl || correspondent.publicProfileUrl || ''
+      profileUrl: correspondent.publicProfileUrl || ''
     };
 
-    // Get messages from conversation (already included in GetConversationsV2 response)
-    const messages = conversation?.messages || [];
+    // Get last prospect message for preview
+    const messages = chatroom?.messages || [];
     const lastProspectMessage = messages.filter(m => m.sender === 'CORRESPONDENT').pop();
 
     if (!lastProspectMessage) {
@@ -196,7 +200,7 @@ async function processOneConversation(conversation, runId) {
       return draft;
     }
 
-    draft.lastProspectMessage = lastProspectMessage.body || lastProspectMessage.messageBody || lastProspectMessage.text || '';
+    draft.lastProspectMessage = lastProspectMessage.messageBody || lastProspectMessage.text || '';
 
     // Check if we've already processed this
     const alreadyProcessed = checkAlreadyProcessed(messages);
@@ -204,8 +208,7 @@ async function processOneConversation(conversation, runId) {
 
     // Generate response using OpenAI with file_search
     console.log(`[${runId}] Generating response for ${draft.prospect.name}...`);
-    // Pass conversation as both params - it has all the data from GetConversationsV2
-    const agentResponse = await generateResponse(conversation, conversation);
+    const agentResponse = await generateResponse(conversation, chatroom);
 
     draft.action = agentResponse.action;
     draft.reasoning = agentResponse.reasoning;

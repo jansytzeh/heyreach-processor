@@ -168,8 +168,8 @@ Preempt objections:
  */
 export function checkAlreadyProcessed(messages) {
   const ourMessages = messages
-    .filter(m => m.sender === 'ME' || m.sender === 'CALLER')
-    .map(m => (m.body || m.text || '').toLowerCase());
+    .filter(m => m.sender === 'CALLER')
+    .map(m => m.text.toLowerCase());
 
   const allText = ourMessages.join(' ');
 

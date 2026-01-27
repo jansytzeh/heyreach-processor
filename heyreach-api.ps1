@@ -6,6 +6,10 @@
 $script:HeyReachBaseUrl = "https://api.heyreach.io"
 $script:HeyReachApiKey = $null
 
+# Error classification for smart retry logic
+$script:RetryableStatusCodes = @(500, 502, 503, 504, 429)  # Server errors + rate limit
+$script:NonRetryableStatusCodes = @(400, 401, 403, 404, 422)  # Client errors - don't retry
+
 function Set-HeyReachApiKey {
     param(
         [Parameter(Mandatory=$true)]
@@ -24,7 +28,36 @@ function Get-HeyReachHeaders {
     }
 }
 
+function New-ApiResult {
+    <#
+    .SYNOPSIS
+    Creates a standardized API result object for consistent error handling.
+    #>
+    param(
+        [bool]$Success = $false,
+        [object]$Data = $null,
+        [int]$StatusCode = 0,
+        [string]$ErrorMessage = $null,
+        [bool]$IsRetryable = $false
+    )
+    return [PSCustomObject]@{
+        Success = $Success
+        Data = $Data
+        StatusCode = $StatusCode
+        ErrorMessage = $ErrorMessage
+        IsRetryable = $IsRetryable
+        Timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    }
+}
+
 function Invoke-HeyReachApi {
+    <#
+    .SYNOPSIS
+    Makes API calls with robust retry logic, timeout handling, and structured error responses.
+    .PARAMETER ThrowOnError
+    If $true (default for backward compatibility), throws on final failure.
+    If $false, returns a structured result object with Success=$false.
+    #>
     param(
         [Parameter(Mandatory=$true)]
         [string]$Endpoint,
@@ -39,11 +72,19 @@ function Invoke-HeyReachApi {
         [int]$RetryCount = 3,
 
         [Parameter(Mandatory=$false)]
-        [int]$RetryDelaySeconds = 2
+        [int]$RetryDelaySeconds = 2,
+
+        [Parameter(Mandatory=$false)]
+        [int]$TimeoutSeconds = 30,
+
+        [Parameter(Mandatory=$false)]
+        [bool]$ThrowOnError = $true
     )
 
     $uri = "$script:HeyReachBaseUrl$Endpoint"
     $headers = Get-HeyReachHeaders
+    $lastError = $null
+    $lastStatusCode = 0
 
     for ($i = 1; $i -le $RetryCount; $i++) {
         try {
@@ -52,6 +93,7 @@ function Invoke-HeyReachApi {
                 Method = $Method
                 Headers = $headers
                 ContentType = "application/json"
+                TimeoutSec = $TimeoutSeconds
             }
 
             if ($Body -and $Method -ne "GET") {
@@ -59,28 +101,62 @@ function Invoke-HeyReachApi {
             }
 
             $response = Invoke-RestMethod @params
+
+            # Success - return result
+            if (-not $ThrowOnError) {
+                return New-ApiResult -Success $true -Data $response -StatusCode 200
+            }
             return $response
         }
         catch {
-            $statusCode = $_.Exception.Response.StatusCode.value__
+            $statusCode = 0
+            $errorMessage = $_.Exception.Message
 
-            # Rate limit - wait and retry
+            # Extract status code if available
+            if ($_.Exception.Response) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+            }
+
+            $lastError = $errorMessage
+            $lastStatusCode = $statusCode
+
+            # Check if error is retryable
+            $isRetryable = ($statusCode -in $script:RetryableStatusCodes) -or ($statusCode -eq 0)
+
+            # Non-retryable errors - fail immediately (404, 400, 401, 403, 422)
+            if ($statusCode -in $script:NonRetryableStatusCodes) {
+                Write-Warning "Non-retryable error ($statusCode): $errorMessage"
+                if (-not $ThrowOnError) {
+                    return New-ApiResult -Success $false -StatusCode $statusCode -ErrorMessage $errorMessage -IsRetryable $false
+                }
+                throw "API call failed (non-retryable, status $statusCode): $errorMessage"
+            }
+
+            # Rate limit - wait longer and retry
             if ($statusCode -eq 429) {
                 Write-Warning "Rate limit hit. Waiting 60 seconds before retry..."
                 Start-Sleep -Seconds 60
                 continue
             }
 
-            # Other errors - retry with backoff
+            # Retryable errors (500, 502, 503, 504, timeout) - retry with exponential backoff + jitter
             if ($i -lt $RetryCount) {
-                Write-Warning "API call failed (attempt $i/$RetryCount): $($_.Exception.Message)"
-                Start-Sleep -Seconds ($RetryDelaySeconds * $i)
-            }
-            else {
-                throw "API call failed after $RetryCount attempts: $($_.Exception.Message)"
+                $backoffSeconds = [Math]::Min(($RetryDelaySeconds * [Math]::Pow(2, $i - 1)), 30)
+                $jitter = Get-Random -Minimum 0 -Maximum 1000
+                $totalWait = $backoffSeconds + ($jitter / 1000)
+
+                Write-Warning "API call failed (attempt $i/$RetryCount, status $statusCode): $errorMessage"
+                Write-Warning "Retrying in $([Math]::Round($totalWait, 1)) seconds..."
+                Start-Sleep -Seconds $totalWait
             }
         }
     }
+
+    # All retries exhausted
+    if (-not $ThrowOnError) {
+        return New-ApiResult -Success $false -StatusCode $lastStatusCode -ErrorMessage $lastError -IsRetryable $true
+    }
+    throw "API call failed after $RetryCount attempts: $lastError"
 }
 
 #region Authentication
@@ -372,7 +448,12 @@ function Get-HeyReachConversations {
 
     $filters = @{
         linkedInAccountIds = $LinkedInAccountIds
-        campaignIds = $CampaignIds
+    }
+
+    # Only include campaignIds if explicitly provided (non-empty)
+    # Omitting it fetches ALL conversations across all campaigns
+    if ($CampaignIds -and $CampaignIds.Count -gt 0) {
+        $filters.campaignIds = $CampaignIds
     }
 
     if ($LeadProfileUrl) { $filters.leadProfileUrl = $LeadProfileUrl }
@@ -442,6 +523,75 @@ function Send-HeyReachMessage {
     }
 
     return Invoke-HeyReachApi -Endpoint "/api/public/inbox/SendMessage" -Method "POST" -Body $body
+}
+
+function Send-HeyReachMessageSafe {
+    <#
+    .SYNOPSIS
+    Robust message sending with structured error handling for batch processing.
+    Returns a result object instead of throwing - ideal for processing multiple conversations.
+
+    .OUTPUTS
+    PSCustomObject with properties:
+    - Success: $true if message sent
+    - ConversationId: The conversation ID attempted
+    - StatusCode: HTTP status code (0 if timeout/connection error)
+    - ErrorMessage: Error details if failed
+    - IsRetryable: Whether the error could succeed on retry
+    - ShouldSkip: Whether to skip this conversation in future runs
+
+    .EXAMPLE
+    $result = Send-HeyReachMessageSafe -LinkedInAccountId 93126 -ConversationId "abc123" -Message "Hello"
+    if ($result.Success) { Write-Host "Sent!" }
+    elseif ($result.ShouldSkip) { Write-Host "Skip this conversation: $($result.ErrorMessage)" }
+    else { Write-Host "Retry later: $($result.ErrorMessage)" }
+    #>
+    param(
+        [Parameter(Mandatory=$true)]
+        [int]$LinkedInAccountId,
+
+        [Parameter(Mandatory=$true)]
+        [string]$ConversationId,
+
+        [Parameter(Mandatory=$true)]
+        [string]$Message,
+
+        [string]$Subject = "",
+
+        [int]$TimeoutSeconds = 30,
+
+        [int]$RetryCount = 3
+    )
+
+    $body = @{
+        linkedInAccountId = $LinkedInAccountId
+        conversationId = $ConversationId
+        message = $Message
+        subject = $Subject
+    }
+
+    $result = Invoke-HeyReachApi -Endpoint "/api/public/inbox/SendMessage" -Method "POST" -Body $body -ThrowOnError $false -TimeoutSeconds $TimeoutSeconds -RetryCount $RetryCount
+
+    # Add conversation context and skip recommendation
+    $shouldSkip = $false
+    if (-not $result.Success) {
+        # 404 = conversation doesn't exist or is stale - skip permanently
+        # 400/422 = bad request - likely invalid conversation - skip
+        # 403 = forbidden - account issue - skip for this account
+        $shouldSkip = $result.StatusCode -in @(400, 403, 404, 422)
+    }
+
+    return [PSCustomObject]@{
+        Success = $result.Success
+        ConversationId = $ConversationId
+        LinkedInAccountId = $LinkedInAccountId
+        Data = $result.Data
+        StatusCode = $result.StatusCode
+        ErrorMessage = $result.ErrorMessage
+        IsRetryable = $result.IsRetryable
+        ShouldSkip = $shouldSkip
+        Timestamp = $result.Timestamp
+    }
 }
 
 #endregion

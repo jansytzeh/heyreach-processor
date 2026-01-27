@@ -798,6 +798,538 @@ Como reclutador, CazVid puede ser especialmente útil para ti:
 
 ---
 
+### EC-054: Job Seeker (Redirect to CazVid App)
+
+**Category:** Wrong Target - Redirect
+**Discovered:** 2026-01-10
+**Source:** Live Conversation - 2-OTIxOGQ3NGMtMmZiNS00ZWE0LTgwN2MtYWY0MTk2NDExY2Y4XzEwMA%3D%3D
+
+**Trigger Messages:**
+> "I'm looking for a job"
+> "Do you have any openings?"
+> "Busco trabajo"
+> "Estoy buscando empleo"
+
+**Context:**
+- These are CANDIDATES looking for work, not employers hiring
+- We're pitching to employers, but job seekers sometimes respond
+- They're valuable - just need to go to the right place!
+
+**Why It's Tricky:**
+- Not a "wrong target" to close on - we CAN help them, just differently
+- Don't want to brush them off rudely
+- Should redirect them helpfully to job seeker registration
+
+**Correct Handling:**
+**REDIRECT** - Warmly redirect to CazVid job seeker registration at `https://cazvid.app.link`
+
+**Ideal Response (English):**
+```
+Hi [Name]! Actually, we help companies find candidates - but great news: you can register as a job seeker on CazVid and get matched with employers looking for people like you!
+
+Sign up here: https://cazvid.app.link
+
+Good luck with your search!
+```
+
+**Ideal Response (Spanish):**
+```
+¡Hola [Name]! Nosotros ayudamos a empresas a encontrar candidatos, pero tengo buenas noticias: puedes registrarte como buscador de empleo en CazVid y conectarte con empleadores que buscan personas como tú.
+
+Regístrate aquí: https://cazvid.app.link
+
+¡Éxito en tu búsqueda!
+```
+
+**Detection Rule:**
+- English: "looking for a job", "looking for work", "job hunting", "job searching", "open to opportunities", "between jobs", "do you have openings", "are you hiring"
+- Spanish: "busco trabajo", "buscando trabajo", "busco empleo", "buscando empleo", "estoy desempleado", "sin trabajo", "busco oportunidades"
+
+**Status:** Active - New Redirect Type
+
+---
+
+### EC-055: Link Trust Question
+
+**Category:** Trust/Security Concern
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Mahmoud Abdelaziz conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "is this link trust ?"
+> "Is this link safe?"
+> "Can I trust this link?"
+
+**Context:**
+- Prospect received candidate links with UTM parameters
+- The long URL with parameters looks suspicious to them
+- They're hesitant to click
+
+**Why It's Tricky:**
+- Legitimate security concern - we should address it
+- Need to explain without being condescending
+- Should offer alternative if they're still hesitant
+
+**Correct Handling:**
+**RESPOND** - Confirm legitimacy, explain simply, offer alternative.
+
+**Jan's Response (learned 2026-01-12):**
+```
+Hi [Name], yes, this link is to an official page of CazVid and contains UTM parameters for marketing tracking.
+
+You can also search for CazVid on google and get started from our website.
+```
+
+**Why This Works:**
+- Confirms it's official
+- Explains the technical part simply (UTM = marketing tracking)
+- Offers alternative (search Google) for cautious prospects
+
+**Detection Rule:**
+- Contains: "is this link safe", "is this link trust", "can I trust this", "is this legitimate", "is this real", "looks suspicious"
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-056: Platform Hesitation
+
+**Category:** Objection - Friction Concern
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Daniela Volio conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "I am not looking to join any additional platforms"
+> "I don't want to sign up for another service"
+> "Too many platforms already"
+
+**Context:**
+- Prospect has platform fatigue
+- Worried about commitment, subscriptions, complexity
+- May have had bad experiences with other platforms
+
+**Why It's Tricky:**
+- Valid concern - people are overwhelmed with tools
+- Need to address the friction directly
+- Can't just ignore and push the link anyway
+
+**Correct Handling:**
+**RESPOND** - Address friction directly, emphasize simplicity.
+
+**Jan's Response (learned 2026-01-12):**
+```
+No problem, [Name]. All you need to post your job for free over at CazVid, is your email.
+
+No subscription required.
+
+Might you feel it appropriate, you can post your job for free over at: [link]
+
+Have a great weekend!
+```
+
+**Why This Works:**
+- Acknowledges their concern: "No problem"
+- Removes friction: "All you need is your email"
+- Removes fear: "No subscription required"
+- Soft language: "Might you feel it appropriate"
+- Warm close: "Have a great weekend!"
+
+**Detection Rule:**
+- Contains: "don't want to join", "not looking to join", "another platform", "too many platforms", "don't want to sign up", "no more tools"
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-057: Not Decision Maker (Referral Request)
+
+**Category:** Wrong Contact - Referral Opportunity
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Joanna Toro conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "I'm not involved in vendor selection or purchasing decisions"
+> "I'm not the decision maker"
+> "You need to talk to my manager"
+> "I don't handle that"
+
+**Context:**
+- Prospect is not the right person to sell to
+- But they might know who IS the right person
+- Opportunity to get a warm referral
+
+**Why It's Tricky:**
+- Easy to give up and move on
+- But a referral is valuable
+- Need to ask without being pushy
+
+**Correct Handling:**
+**RESPOND** - Acknowledge briefly, ask for referral.
+
+**Jan's Response (learned 2026-01-12):**
+```
+Sounds good, [Name]. Is there any specific person I should reach out to?
+```
+
+**Why This Works:**
+- Brief acknowledgment: "Sounds good"
+- Direct referral request
+- No over-explaining or apologizing
+- Short and respectful
+
+**Detection Rule:**
+- Contains: "not the decision maker", "not involved in", "don't handle purchasing", "talk to my manager", "reach out to our", "not my area", "individual contributor"
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-058: Wrong Company Info
+
+**Category:** Data Error - Recovery
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Sara Drake conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "I don't work at [Company]"
+> "I left that company"
+> "That's not my company"
+> "Wrong person"
+
+**Context:**
+- Our data is outdated - they changed jobs
+- Embarrassing but recoverable
+- They might still be a valid prospect
+
+**Why It's Tricky:**
+- Tempting to over-apologize
+- Could lose the prospect if handled poorly
+- Need to pivot quickly
+
+**Correct Handling:**
+**RESPOND** - Acknowledge briefly, ask clarifying question to stay in conversation.
+
+**Jan's Response (learned 2026-01-12):**
+```
+Got it [Name]. Are you still in business development?
+```
+
+**Why This Works:**
+- Brief acknowledgment: "Got it"
+- Clarifying question to re-qualify them
+- No excessive apology
+- Stays in conversation
+
+**Detection Rule:**
+- Contains: "don't work at", "I left", "no longer at", "that's not my company", "wrong company", "I'm at [different company] now"
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-059: Phone Number Request
+
+**Category:** High Interest - Contact Request
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Silpa Nayak conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "Please forward your number"
+> "I'll call you"
+> "What's your phone number?"
+> "Can I call you?"
+
+**Context:**
+- Prospect wants to talk on phone - HIGH INTEREST signal
+- Need to provide contact info
+- Still redirect to platform
+
+**Correct Handling:**
+**RESPOND** - Provide phone number + WhatsApp + redirect to platform.
+
+**Jan's Response (learned 2026-01-12):**
+```
+Hi [Name], you may call us over at +16233047338 or write us on WhatsApp on that number.
+
+Please post your job on [link] so I can send you candidates directly.
+```
+
+**Why This Works:**
+- Provides phone number
+- Offers WhatsApp alternative
+- Still redirects to platform action
+
+**Company Phone:** +16233047338
+
+**Detection Rule:**
+- Contains: "your number", "phone number", "call you", "I'll call", "can I call", "want to speak", "talk on phone"
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-060: Counter-Pitch (Someone Selling TO Us)
+
+**Category:** Inbound Sales - Redirect
+**Discovered:** 2026-01-12
+**Source:** Training Mode 2 - Sarah Jones conversation (Manual Handled Jan)
+
+**Trigger Messages:**
+> "We help recruiters find candidates..."
+> "We offer CV sourcing services..."
+> "Would you like a free trial?"
+
+**Context:**
+- Someone is pitching THEIR services to us
+- Often BPO or recruiting service providers
+- We should decline but potentially redirect them to OUR product
+
+**Correct Handling:**
+**RESPOND** - Politely decline, pivot to our product if relevant.
+
+**Jan's Response (learned 2026-01-12):**
+```
+Hi [Name], thanks but this does not apply to me.
+
+You might be able to use our free job posting and candidate sourcing platform, CazVid.
+
+Let me know if you'd like more info on that
+```
+
+**Why This Works:**
+- Polite decline: "thanks but this does not apply to me"
+- Pivot to our product
+- Soft close: "Let me know if you'd like more info"
+
+**Detection Rule:**
+- Message is FROM them (not response to us)
+- Contains sales language: "we help", "we offer", "free trial", "our services", "would you be interested"
+- They're pitching, not responding
+
+**Status:** Active - New Response Type
+
+---
+
+### EC-061: Gave Up Too Soon (Prospect Says "All Set")
+
+**Category:** Persistence - Recovery Opportunity
+**Discovered:** 2026-01-12
+**Source:** Jan's Feedback - Corey Lee conversation (Bad AI Handling)
+
+**Trigger Messages:**
+> "I think we've got it covered"
+> "We have everything we need"
+> "Candidate scarce market" (said as reason)
+> "All set thanks"
+
+**Context:**
+- Corey Lee (Founder @ Venture Recruit) said his market was "candidate scarce"
+- AI responded: "Thanks for sharing that, Corey! I'll stop reaching out"
+- This is WRONG - "candidate scarce" is a BUYING SIGNAL, not a close signal
+
+**Why It's Critical:**
+- "Candidate scarce" = They NEED candidates → CazVid helps!
+- AI gave up when prospect presented a PROBLEM we can solve
+- Should have pivoted to CazVid as the solution
+
+**What Went Wrong (AI Response):**
+```
+"Thanks for sharing that, Corey! I'll stop reaching out for now, but if things change or you want to explore new talent sources, feel free to reconnect. Best of luck!"
+```
+↑ WRONG: Gave up when he NEEDS what we offer
+
+**Correct Handling:**
+**RESPOND** - Challenge them with a demo or make it a game.
+
+**Jan's Instruction:**
+> "If he really thinks he has everything let's review it in a demo. Make it a game."
+
+**Better Response:**
+```
+"I hear you, Corey! Candidate-scarce market is exactly why we built CazVid though - our database has video-first candidates others don't see.
+
+Tell you what - give me 2 minutes in a demo. If I can't show you candidates you haven't found yet, I'll never reach out again. Fair?"
+```
+
+**Why This Works:**
+- Acknowledges their situation
+- Pivots the PROBLEM into OUR SOLUTION
+- Creates a low-risk "game" (2-minute demo)
+- Stakes are clear (never reach out again if we fail)
+- Makes it interesting, not pushy
+
+**Detection Rule:**
+- Prospect says: "all set", "covered", "have everything", "not hiring", "candidate scarce", "market is dry"
+- AI is about to close/give up
+- **STOP** - Offer demo challenge instead
+
+**Status:** Active - Critical Persistence Pattern
+
+---
+
+### EC-062: Missing CTA (Dead End Message)
+
+**Category:** Message Quality - Missing Action
+**Discovered:** 2026-01-12
+**Source:** Jan's Feedback - Conversation 2-Zjg2MzkwMTkt...
+
+**What Happened:**
+- AI sent a response that lacked a clear call-to-action
+- Message was informative but didn't drive any action
+- Prospect has nowhere to go after reading it
+
+**Why It's Critical:**
+- Every message should move the conversation forward
+- No CTA = dead conversation
+- "Activating messages" are what convert
+
+**Correct Handling:**
+**ALWAYS include one of these CTAs:**
+
+1. **If they haven't posted a job:**
+   - "Post your job for free here: [link]"
+
+2. **If they've seen profiles:**
+   - "Which candidate would you like to contact first?"
+   - "Here's how to reach out: [video link]"
+
+3. **If they're asking questions:**
+   - "Want me to show you in a quick demo?"
+   - "Would you like to see some sample candidates?"
+
+4. **If they're declining:**
+   - "Is it timing, fit, or need?"
+   - "What would need to change for this to be useful?"
+
+**Detection Rule:**
+- Response is being generated
+- Check: Does it contain a CTA or question?
+- If NO → Add one before sending
+
+**Status:** Active - Quality Guardrail
+
+---
+
+### EC-064: Demo/Call Request (Inbound Only - CazVid)
+
+**Category:** CazVid - Meeting Request (Inbound)
+**Discovered:** 2026-01-12
+**Source:** Jan's Instruction - Weekly webinar introduction
+
+**Trigger Messages:**
+> "Can we schedule a call?"
+> "I'd like to see a demo"
+> "Can you show me how it works?"
+> "¿Podemos agendar una llamada?"
+> "Me gustaría una demostración"
+
+**Context:**
+- Prospect is ASKING US for a demo or call
+- This is an INBOUND request - they initiated
+- CazVid now has weekly webinars on Wednesdays
+
+**Why It's Important:**
+- Weekly webinars are efficient (group format)
+- Prospect self-books, reducing friction
+- Shows we're organized and professional
+- BUT: Only offer when THEY ask first
+
+**CRITICAL RULES:**
+
+1. **ONLY for inbound requests** - Prospect must ask first
+2. **CazVid ONLY** - Not for Agency Leads conversations
+3. **Do NOT proactively offer** - Wait for them to request
+4. **Let them self-book** - Provide link, they choose slot
+
+**Webinar Schedule:**
+| Language | Day | Time (Pacific) | Booking URL |
+|----------|-----|----------------|-------------|
+| Spanish | Wednesday | 10:00-10:30 AM | https://calendly.com/cazvid/demo-es |
+| English | Wednesday | 11:00-11:30 AM | https://calendly.com/cazvid/demo-en |
+
+**Correct Handling:**
+**RESPOND** - Offer weekly webinar with self-booking link.
+
+**Example Response (English):**
+```
+Of course [Name]! We do weekly webinars on Wednesdays from 11:00 to 11:30 AM Pacific time. You can reserve your spot here: https://calendly.com/cazvid/demo-en
+
+Would that work for you?
+```
+
+**Example Response (Spanish):**
+```
+¡Claro [Name]! Hacemos webinars semanales los miércoles de 10:00 a 10:30 AM hora del Pacífico. Puedes reservar tu lugar aquí: https://calendly.com/cazvid/demo-es
+
+¿Te funcionaría ese horario?
+```
+
+**Detection Rule:**
+- CazVid conversation (not Agency Leads)
+- Prospect message contains: "demo", "call", "meeting", "show me", "schedule", "llamada", "demostración", "reunión", "agendar"
+- Message is a REQUEST, not just a question about the product
+- Action: Offer weekly webinar with booking link
+
+**What NOT to Do:**
+- Don't proactively say "Would you like a demo?"
+- Don't offer this in Agency Leads conversations
+- Don't push demo when they just have simple questions
+
+**Status:** Active - New Response Type (Inbound Only)
+
+---
+
+### EC-063: Context Not Used (Redundant Questions)
+
+**Category:** Message Quality - Context Awareness
+**Discovered:** 2026-01-12
+**Source:** Jan's Feedback - Conversation 2-ZWMxZDUzZjct...
+
+**What Happened:**
+- AI asked "Do you have any job openings?"
+- Prospect had ALREADY SAID "yes" about a customer service position
+- AI didn't use the context from previous messages
+
+**Why It's Critical:**
+- Shows we're not listening
+- Makes us look like a bot
+- Damages trust instantly
+- Prospect thinks: "Didn't I just say that?"
+
+**Jan's Feedback:**
+> "Did not use the context. We asked if they are still hiring for the customer service position, they said yes, and then we asked if they have any job."
+
+**Correct Handling:**
+**ALWAYS check conversation history before asking questions.**
+
+**Before asking ANY question, verify:**
+1. Has this already been asked?
+2. Has the prospect already answered this?
+3. Can I reference what they've already said?
+
+**Example of BAD:**
+```
+Prospect: "Yes, we're still hiring for customer service"
+AI: "Great! Do you have any open positions?"
+```
+↑ WRONG: They JUST told us they're hiring for customer service
+
+**Example of GOOD:**
+```
+Prospect: "Yes, we're still hiring for customer service"
+AI: "Perfect! I've got some customer service candidates in mind. Would you like me to send a few profiles over?"
+```
+↑ RIGHT: Uses context, advances conversation
+
+**Detection Rule:**
+- Before generating a question, search conversation history
+- If similar question/answer exists → Reference it, don't repeat
+- "You mentioned [X]..." is better than asking again
+
+**Status:** Active - Quality Guardrail
+
+---
+
 ## Adding New Edge Cases
 
 When you encounter a new edge case:
